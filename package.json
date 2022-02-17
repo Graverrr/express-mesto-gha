@@ -19,7 +19,6 @@
   },
   "homepage": "https://github.com/Graverrr/express-mesto#readme",
   "dependencies": {
-    "eslint": "^8.8.0",
     "express": "^4.17.2",
     "mongoose": "^6.2.1"
   },
