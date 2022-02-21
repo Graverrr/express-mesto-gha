@@ -8,7 +8,7 @@ const {
 const getCards = (req, res) => {
   Card.find({})
   .then((cards) => res.send(cards))
-  .catch(() => res.status(ERROR_NOTFOUND).send({ message: 'Карточка или пользователь не найден; или был запрошен несуществующий роут;' }));
+  .catch(() => res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' }));
 }
 
 
@@ -71,6 +71,7 @@ const dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+  .orFail(new Error('NotFound'))
   .then((card) => {
       res.send(card);
     })

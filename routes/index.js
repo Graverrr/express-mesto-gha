@@ -6,7 +6,7 @@ router.use('/users', userRouter);
 router.use('/cards', cardRouter);
 
 router.use((req, res) => {
-  res.status(404).send({ message: err.message });
+  res.status(404).send({ message: 'Такого роута не существует' });
 });
 
 module.exports = router;

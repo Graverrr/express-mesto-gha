@@ -13,7 +13,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
 });
-app.use('/', require('./routes/users'));
 app.use((req, res, next) => {
   req.user = {
     _id: '62096c17d70bb036a5696167' // вставьте сюда _id созданного в предыдущем пункте пользователя
@@ -22,6 +21,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/', require('./routes/index'));
 
 app.listen(PORT, () => {
   console.log('123');
