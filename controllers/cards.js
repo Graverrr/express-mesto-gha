@@ -3,7 +3,7 @@ const {
   ERROR_CODE,
   ERROR_NOTFOUND,
   ERROR_DEFAULT,
-} = require('../errors/error.js');
+} = require('../errors/errors');
 
 const getCards = (req, res) => {
   Card.find({})
@@ -76,7 +76,7 @@ const dislikeCard = (req, res) => {
       res.send(card);
     })
   .catch((err) => {
-    if (err.message === 'SomeErrorName') {
+    if (err.message === 'NotFound') {
       res.status(ERROR_NOTFOUND).send({ message: 'Передан несуществующий _id карточки.' });
     } else if (err.name === 'CastError') {
       res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные для снятии лайка.' });
