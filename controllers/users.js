@@ -42,10 +42,17 @@ module.exports.updateUserAvatar = (req, res) => {
   const { id } = req.user._id;
   const { avatar } = req.body;
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
+  .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      console.log(err)
-    })
+      if (err.message === 'NotValidId') {
+        res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному _id не найден' });
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
+      } else {
+        res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' });
+      }
+    });
 };
 module.exports.updateUserInfo = (req, res) => {
   const { id } = req.user._id;
