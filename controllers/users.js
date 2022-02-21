@@ -43,7 +43,7 @@ module.exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
   .orFail(new Error('NotValidId'))
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.message === 'NotValidId') {
         res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному _id не найден' });
@@ -60,7 +60,7 @@ module.exports.updateUserInfo = (req, res) => {
 
   User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.message === 'NotValidId') {
         res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному _id не найден' });
