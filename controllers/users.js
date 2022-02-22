@@ -39,9 +39,11 @@ module.exports.createUser = (req, res) => {
 
 
 module.exports.updateUserInfo = (req, res) => {
-  const { id } = req.user._id;
+  const id = req.user._id
   const { name, about } = req.body;
-
+  if (!name || !about) {
+     return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
+    }
   User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
@@ -57,9 +59,11 @@ module.exports.updateUserInfo = (req, res) => {
 };
 
 module.exports.updateUserAvatar = (req, res) => {
-  const { id } = req.user._id;
+  const id = req.user._id
   const { avatar } = req.body;
-
+  if (!body.avatar) {
+    return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
+  }
   User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
