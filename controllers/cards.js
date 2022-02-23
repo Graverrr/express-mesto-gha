@@ -7,10 +7,9 @@ const {
 
 const getCards = (req, res) => {
   Card.find({})
-  .then((cards) => res.send(cards))
-  .catch(() => res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' }));
-}
-
+    .then((cards) => res.send(cards))
+    .catch(() => res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' }));
+};
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
@@ -71,19 +70,19 @@ const dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-  .orFail(new Error('NotFound'))
-  .then((card) => {
+    .orFail(new Error('NotFound'))
+    .then((card) => {
       res.send(card);
     })
-  .catch((err) => {
-    if (err.message === 'NotFound') {
-      res.status(ERROR_NOTFOUND).send({ message: 'Передан несуществующий _id карточки.' });
-    } else if (err.name === 'CastError') {
-      res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные для снятии лайка.' });
-    } else {
-      res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' });
-    }
-  });
+    .catch((err) => {
+      if (err.message === 'NotFound') {
+        res.status(ERROR_NOTFOUND).send({ message: 'Передан несуществующий _id карточки.' });
+      } else if (err.name === 'CastError') {
+        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные для снятии лайка.' });
+      } else {
+        res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' });
+      }
+    });
 };
 
 module.exports = {
@@ -91,5 +90,5 @@ module.exports = {
   createCard,
   deleteCard,
   likeCard,
-  dislikeCard
-}
+  dislikeCard,
+};
