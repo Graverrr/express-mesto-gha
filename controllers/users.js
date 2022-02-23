@@ -34,7 +34,7 @@ module.exports.createUser = (req, res) => {
       if (err.name === 'ValidationError') {
         res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные  пользователя. ' });
       } else {
-        res.status(ERROR_DEFAULT).send({ message: '«На сервере произошла ошибка»'});
+        res.status(ERROR_DEFAULT).send({ message: '«На сервере произошла ошибка»' });
       }
     });
 };
@@ -45,7 +45,7 @@ module.exports.updateUserInfo = (req, res) => {
   if (!name || !about) {
     return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
   }
-  User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
+  return User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
@@ -61,8 +61,11 @@ module.exports.updateUserInfo = (req, res) => {
 
 module.exports.updateUserAvatar = (req, res) => {
   const id = req.user._id;
-  const { avatar = null } = req.body;
-  User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
+  const { avatar } = req.body;
+  if (!avatar) {
+    return res.status(400).send({ message: 'Поле "Avatar" должно быть заполенено' });
+  }
+  return User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
