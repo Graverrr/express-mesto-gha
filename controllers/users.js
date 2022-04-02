@@ -1,10 +1,28 @@
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const Unauthorized = require('../errors/Unauthorized');
+const NotFoundError = require('../errors/NotFoundError');
 const {
   ERROR_CODE,
   ERROR_NOTFOUND,
   ERROR_DEFAULT,
 } = require('../errors/errors');
+
+const { NODE_ENV, JWT_SECRET } = process.env;
+
+module.exports.getUser = (req, res, next) => {
+  const owner = req.user._id;
+  User.findById(owner)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Такого пользователя не существует');
+      } else {
+        res.status(200).send(user);
+      }
+    })
+    .catch(next);
+};
 
 module.exports.getUsers = (req, res) => {
   User.find({})
@@ -46,20 +64,20 @@ module.exports.createUser = (req, res) => {
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  User.findOne({ email })
+  return User.findByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        return res.status(400).send({ message: 'Не верный email или пароль' });
-      }
-      bcrypt.compare(password, user.password)
-        .then((matched) => {
-          if (!matched) {
-            return Promise.reject(new Error('Не верный email или пароль'));
-          }
-          res.status(200).send({ _id: user._id });
-        });
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
+      res.cookie('jwt', `Bearer ${token}`, {
+        maxAge: 3600000,
+        httpOnly: true,
+        sameSite: true,
+      })
+        .status(200).send({ id: user._id });
+    })
+    .catch(() => {
+      next(new Unauthorized({ message: 'Вы не авторизованы' }));
     });
 };
 
