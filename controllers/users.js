@@ -35,7 +35,7 @@ module.exports.getUserById = async (req, res) => {
     .orFail(new Error('NotValidId'))
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.message === 'NotValidId') {
+      if (err.message === '') {
         res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному id не найден' });
       } else if (err.name === 'CastError') {
         res.status(ERROR_CODE).send({ message: 'Невалидный id ' });
@@ -59,7 +59,7 @@ module.exports.createUser = (req, res) => {
       if (err.name === 'ValidationError') {
         res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные  пользователя. ' });
       } else {
-        res.status(ERROR_DEFAULT).send({ message: '«На сервере произошла ошибка»' });
+        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные  пользователя. ' });
       }
     });
 };
