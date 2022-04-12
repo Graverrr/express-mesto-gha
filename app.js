@@ -2,8 +2,7 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
-
-const authRouter = require('./routes/auth');
+const { login, createUser } = require('./controllers/users');
 const usersRouter = require('./routes/users');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -19,7 +18,8 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 });
 
 app.use('/', usersRouter);
-app.use('/auth', authRouter);
+app.post('/signin', login);
+app.post('/signup', createUser);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
