@@ -6,23 +6,22 @@ const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
 const ValidationError = require('../errors/ValidationError');
 const { SALT_ROUNDS, JWT_SECRET } = require('../config/index');
-const {
-  ERROR_CODE,
-  ERROR_NOTFOUND,
-  ERROR_DEFAULT,
-} = require('../errors/errors');
 
 module.exports.getUser = (req, res, next) => {
-  const owner = req.user._id;
-  User.findById(owner)
+  User.findById(req.user._id)
+    .orFail(new Error('NotValidId'))
     .then((user) => {
-      if (!user) {
-        throw new NotFoundError('Такого пользователя не существует');
-      } else {
-        res.status(200).send(user);
-      }
+      res.send(user);
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.kind === 'ObjectId' || err.message === 'NotValidId') {
+        next(new NotFoundError('Пользователь не найден'));
+      } else if (err.user === 'CastError') {
+        next(new ValidationError('Ошибка данных'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.getUsers = (req, res) => {
@@ -31,17 +30,15 @@ module.exports.getUsers = (req, res) => {
     .catch((err) => res.status(500).send({ message: err.message }));
 };
 
-module.exports.getUserById = async (req, res) => {
+module.exports.getUserById = async (req, res, next) => {
   User.findById(req.params.id)
-    .orFail(new Error('NotValidId'))
-    .then((user) => res.send(user))
+    .orFail(new NotFoundError('Пользователь не найден'))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.message === '') {
-        res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному id не найден' });
-      } else if (err.name === 'CastError') {
-        res.status(ERROR_CODE).send({ message: 'Невалидный id ' });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new ValidationError(err.message));
       } else {
-        res.status(ERROR_DEFAULT).send({ message: '«На сервере произошла ошибка»' });
+        next(err);
       }
     });
 };
@@ -91,42 +88,38 @@ module.exports.login = (req, res, next) => {
     });
 };
 
-module.exports.updateUserInfo = (req, res) => {
+module.exports.updateUserInfo = (req, res, next) => {
   const id = req.user._id;
   const { name, about } = req.body;
   if (!name || !about) {
     return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
   }
   return User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
-    .orFail(new Error('NotValidId'))
+    .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному _id не найден' });
-      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new ValidationError(err.message));
       } else {
-        res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' });
+        next(err);
       }
     });
 };
 
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const id = req.user._id;
   const { avatar } = req.body;
   if (!avatar) {
     return res.status(400).send({ message: 'Поле "Avatar" должно быть заполенено' });
   }
   return User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
-    .orFail(new Error('NotValidId'))
+    .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(ERROR_NOTFOUND).send({ message: 'Пользователь по указанному _id не найден' });
-      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(new ValidationError(err.message));
       } else {
-        res.status(ERROR_DEFAULT).send({ message: 'Ошибка по умолчанию.' });
+        next(err);
       }
     });
 };
