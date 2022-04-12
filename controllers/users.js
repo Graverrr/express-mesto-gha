@@ -1,16 +1,16 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const User = require('../models/user');
-const Unauthorized = require('../errors/Unauthorized');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
+const ValidationError = require('../errors/ValidationError');
+const { SALT_ROUNDS, JWT_SECRET } = require('../config/index');
 const {
   ERROR_CODE,
   ERROR_NOTFOUND,
   ERROR_DEFAULT,
 } = require('../errors/errors');
-
-const { NODE_ENV, JWT_SECRET } = process.env;
 
 module.exports.getUser = (req, res, next) => {
   const owner = req.user._id;
@@ -46,44 +46,48 @@ module.exports.getUserById = async (req, res) => {
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
+  if (!email || !password) {
+    next(new ValidationError('Неверный логин или пароль'));
+  }
   User.findOne({ email })
     .then((user) => {
       if (user) {
         throw new ConflictError(`Пользователь ${email} уже зарегестрирован`);
       }
-      return bcrypt.hash(password, 10);
+      return bcrypt.hash(password, SALT_ROUNDS);
     })
     .then((hash) => User.create({
       name, about, avatar, email, password: hash, // записываем хеш в базу
     }))
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные  пользователя. ' });
-      } else {
-        res.status(ERROR_CODE).send({ message: 'Переданы некорректные данные  пользователя. ' });
-      }
+      next(err);
     });
 };
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  return User.findByCredentials(email, password)
+  User.findOne({ email }).select('+password')
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
-      res.cookie('jwt', `Bearer ${token}`, {
-        maxAge: 3600000,
-        httpOnly: true,
-        sameSite: true,
-      })
-        .status(200).send({ id: user._id });
+      if (!user) {
+        throw new UnauthorizedError('Невреный логин или пароль');
+      }
+      return bcrypt.compare(password, user.password);
+    })
+    .then((isValid) => {
+      if (!isValid) {
+        throw new UnauthorizedError('Невреный логин или пароль');
+      }
+
+      const token = jwt.sign({ email }, JWT_SECRET);
+      res.send({ jwt: token });
     })
     .catch(() => {
-      next(new Unauthorized({ message: 'Вы не авторизованы' }));
+      next();
     });
 };
 

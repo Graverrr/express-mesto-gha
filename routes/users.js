@@ -6,8 +6,9 @@ const {
   updateUserAvatar,
   getUser,
 } = require('../controllers/users');
+const auth = require('../middlewares/auth');
 
-router.get('/', getUsers);
+router.get('/', auth, getUsers);
 router.get('/me', getUser);
 router.get('/:id', getUserById);
 router.patch('/me', updateUserInfo);
