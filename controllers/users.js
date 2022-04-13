@@ -81,6 +81,7 @@ module.exports.login = (req, res, next) => {
       if (!isValid) {
         throw new UnauthorizedError('Невреный логин или пароль');
       }
+      return user;
     })
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
