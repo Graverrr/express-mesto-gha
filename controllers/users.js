@@ -9,14 +9,12 @@ const { SALT_ROUNDS, JWT_SECRET } = require('../config/index');
 
 module.exports.getUser = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail(new Error('NotValidId'))
+    .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => {
       res.send(user);
     })
     .catch((err) => {
-      if (err.kind === 'ObjectId' || err.message === 'NotValidId') {
-        next(new NotFoundError('Пользователь не найден'));
-      } else if (err.user === 'CastError') {
+      if (err.name === 'CastError') {
         next(new ValidationError('Ошибка данных'));
       } else {
         next(err);
@@ -24,10 +22,10 @@ module.exports.getUser = (req, res, next) => {
     });
 };
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch(next);
 };
 
 module.exports.getUserById = async (req, res, next) => {
@@ -60,7 +58,11 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash, // записываем хеш в базу
     }))
-    .then((user) => res.send(user))
+    .then(() => res.status(200).send({
+      data: {
+        name, about, avatar, email,
+      },
+    }))
     .catch((err) => {
       next(err);
     });
@@ -83,17 +85,12 @@ module.exports.login = (req, res, next) => {
       const token = jwt.sign({ email }, JWT_SECRET);
       res.send({ jwt: token });
     })
-    .catch(() => {
-      next();
-    });
+    .catch(next);
 };
 
 module.exports.updateUserInfo = (req, res, next) => {
   const id = req.user._id;
   const { name, about } = req.body;
-  if (!name || !about) {
-    return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
-  }
   return User.findByIdAndUpdate(id, { name, about }, { new: true, runValidators: true })
     .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => res.send({ data: user }))
@@ -105,13 +102,9 @@ module.exports.updateUserInfo = (req, res, next) => {
       }
     });
 };
-
 module.exports.updateUserAvatar = (req, res, next) => {
   const id = req.user._id;
   const { avatar } = req.body;
-  if (!avatar) {
-    return res.status(400).send({ message: 'Поле "Avatar" должно быть заполенено' });
-  }
   return User.findByIdAndUpdate(id, { avatar }, { new: true, runValidators: true })
     .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => res.send({ data: user }))
