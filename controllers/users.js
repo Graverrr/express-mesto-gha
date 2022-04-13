@@ -81,6 +81,7 @@ module.exports.login = (req, res, next) => {
       if (!isValid) {
         throw new UnauthorizedError('Невреный логин или пароль');
       }
+      // eslint-disable-next-line no-undef
       return user;
     })
     .then((user) => {
