@@ -30,7 +30,7 @@ app.use('/cards', cards);
 app.use((req, res, next) => {
   next(new NotFoundError('Маршрут не найден'));
 });
-app.use(errors);
+app.use(errors());
 app.use(errorHandler);
 
 app.listen(PORT, () => {

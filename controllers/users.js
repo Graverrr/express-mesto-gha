@@ -77,11 +77,12 @@ module.exports.login = (req, res, next) => {
       }
       return bcrypt.compare(password, user.password);
     })
-    .then((isValid, user) => {
+    .then((isValid) => {
       if (!isValid) {
         throw new UnauthorizedError('Невреный логин или пароль');
       }
-
+    })
+    .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       res.send({ jwt: token });
     })
