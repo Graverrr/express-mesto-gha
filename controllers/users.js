@@ -75,14 +75,13 @@ module.exports.login = (req, res, next) => {
       if (!user) {
         throw new UnauthorizedError('Невреный логин или пароль');
       }
-      return bcrypt.compare(password, user.password);
-    })
-    .then((isValid) => {
-      if (!isValid) {
-        throw new UnauthorizedError('Невреный логин или пароль');
-      }
-      // eslint-disable-next-line no-undef
-      return user;
+      return bcrypt.compare(password, user.password)
+        .then((isValid) => {
+          if (!isValid) {
+            throw new UnauthorizedError('Невреный логин или пароль');
+          }
+          return user;
+        });
     })
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
