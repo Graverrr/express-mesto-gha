@@ -10,7 +10,6 @@ const cards = require('./routes/cards');
 const errorHandler = require('./middlewares/errorHandler');
 const NotFoundError = require('./errors/NotFoundError');
 const { validateSignin, validateSignup } = require('./middlewares/validations');
-
 const { PORT = 3000 } = process.env;
 
 const app = express();
